@@ -1,0 +1,25 @@
+// Serves game/ on http://localhost:8080 for local play-testing.
+// Node standard library only; no dependencies.
+import { createServer } from 'node:http';
+import { readFile } from 'node:fs/promises';
+import { join, extname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = fileURLToPath(new URL('game/', import.meta.url));
+const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg' };
+
+const server = createServer(async (req, res) => {
+  try {
+    const path = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+    const file = join(root, path === '/' ? 'index.html' : path);
+    if (!file.startsWith(root)) { res.writeHead(403); res.end(); return; }
+    const data = await readFile(file);
+    res.writeHead(200, { 'Content-Type': types[extname(file)] ?? 'application/octet-stream' });
+    res.end(data);
+  } catch {
+    res.writeHead(404);
+    res.end('not found');
+  }
+});
+
+server.listen(8080, () => console.log('Garuda Sky Courier at http://localhost:8080'));
